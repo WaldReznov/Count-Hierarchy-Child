@@ -26,6 +26,7 @@ private class ContactTriggerHandlerTest {
 
 	@IsTest
 	static void testCreateWithHierarchy() {
+		Test.startTest();
 		Map<String, Contact> contacts = new Map<String, Contact>{
 				'Andrey' => new Contact(LastName = 'Andrey'),
 				'Vlad' => new Contact(LastName = 'Vlad'),
@@ -49,9 +50,6 @@ private class ContactTriggerHandlerTest {
 		contacts.get('Kolia').Parent_Contact__c = contacts.get('Dima').Id;
 		contacts.get('Diana').Parent_Contact__c = contacts.get('Dima').Id;
 
-		System.debug('FIRSTUPDATE');
-//		ContactTriggerHandler.IS_ALLOW_AFTER_UPDATE = true;
-
 		update contacts.values();
 
 		insert new Contact(
@@ -60,21 +58,15 @@ private class ContactTriggerHandlerTest {
 				Parent_Contact__c = contacts.get('Dima').Id
 		);
 
-		Contact andrey = [SELECT Id, ChildCount__c, Highest_Parent__c FROM Contact WHERE LastName = 'andrey'];
-		Contact vlad = [SELECT Id, ChildCount__c, Highest_Parent__c FROM Contact WHERE LastName = 'vlad'];
-		Contact dima = [SELECT Id, ChildCount__c, Highest_Parent__c FROM Contact WHERE LastName = 'dima'];
-		Contact sasha = [SELECT Id, ChildCount__c, Highest_Parent__c FROM Contact WHERE LastName = 'sasha'];
-		Contact kolia = [SELECT Id, ChildCount__c, Highest_Parent__c FROM Contact WHERE LastName = 'kolia'];
-		Contact diana = [SELECT Id, ChildCount__c, Highest_Parent__c FROM Contact WHERE LastName = 'diana'];
-		Contact zipex = [SELECT Id, ChildCount__c, Highest_Parent__c FROM Contact WHERE LastName = 'zipex'];
+		Test.stopTest();
 
-		System.debug('Andrey: ' + andrey);
-		System.debug('vlad: ' + vlad);
-		System.debug('dima: ' + dima);
-		System.debug('sasha: ' + sasha);
-		System.debug('kolia: ' + kolia);
-		System.debug('diana: ' + diana);
-		System.debug('zipex: ' + zipex);
+		Contact andrey = [SELECT Id, ChildCount__c FROM Contact WHERE LastName = 'andrey'];
+		Contact vlad = [SELECT Id, ChildCount__c FROM Contact WHERE LastName = 'vlad'];
+		Contact dima = [SELECT Id, ChildCount__c FROM Contact WHERE LastName = 'dima'];
+		Contact sasha = [SELECT Id, ChildCount__c FROM Contact WHERE LastName = 'sasha'];
+		Contact kolia = [SELECT Id, ChildCount__c FROM Contact WHERE LastName = 'kolia'];
+		Contact diana = [SELECT Id, ChildCount__c FROM Contact WHERE LastName = 'diana'];
+		Contact zipex = [SELECT Id, ChildCount__c FROM Contact WHERE LastName = 'zipex'];
 
 		System.assertEquals(6, andrey.ChildCount__c);
 		System.assertEquals(5, vlad.ChildCount__c);
@@ -107,6 +99,8 @@ private class ContactTriggerHandlerTest {
 
 	@IsTest
 	static void testUpdateWithHierarchy() {
+		Test.startTest();
+		
 		Map<String, Contact> contacts = new Map<String, Contact>{
 				'Andrey' => new Contact(LastName = 'Andrey'),
 				'Vlad' => new Contact(LastName = 'Vlad'),
@@ -114,7 +108,7 @@ private class ContactTriggerHandlerTest {
 				'Sasha' => new Contact(LastName = 'Sasha'),
 				'Kolia' => new Contact(LastName = 'Kolia'),
 				'Diana' => new Contact(LastName = 'Diana')
-		};
+		}; 
 
 		insert contacts.values();
 
@@ -130,15 +124,8 @@ private class ContactTriggerHandlerTest {
 		contacts.get('Kolia').Parent_Contact__c = contacts.get('Dima').Id;
 		contacts.get('Diana').Parent_Contact__c = contacts.get('Dima').Id;
 
-		System.debug('FIRSTUPDATE');
-//		ContactTriggerHandler.IS_ALLOW_AFTER_UPDATE = true;
-
 		update contacts.values();
-
-		for(Contact contact : [SELECT Id, ChildCount__c, Parent_Contact__r.Id, Parent_Contact__r.Parent_Contact__r.Parent_Contact__r.Id FROM Contact]) {
-			System.debug(contact);
-		}
-
+		
 		contacts.get('Diana').ReportsTo = null;
 		contacts.get('Kolia').ReportsTo = contacts.get('Diana');
 		contacts.get('Dima').ReportsTo = contacts.get('Kolia');
@@ -153,23 +140,16 @@ private class ContactTriggerHandlerTest {
 		contacts.get('Vlad').Parent_Contact__c = contacts.get('Dima').Id;
 		contacts.get('Andrey').Parent_Contact__c = contacts.get('Dima').Id;
 
-		System.debug('SECONDUPDATE');
-//		ContactTriggerHandler.IS_ALLOW_AFTER_UPDATE = true;
 		update contacts.values();
 
-		Contact andrey = [SELECT Id, ChildCount__c, Highest_Parent__c FROM Contact WHERE LastName = 'andrey'];
-		Contact vlad = [SELECT Id, ChildCount__c, Highest_Parent__c FROM Contact WHERE LastName = 'vlad'];
-		Contact dima = [SELECT Id, ChildCount__c, Highest_Parent__c FROM Contact WHERE LastName = 'dima'];
-		Contact sasha = [SELECT Id, ChildCount__c, Highest_Parent__c FROM Contact WHERE LastName = 'sasha'];
-		Contact kolia = [SELECT Id, ChildCount__c, Highest_Parent__c FROM Contact WHERE LastName = 'kolia'];
-		Contact diana = [SELECT Id, ChildCount__c, Highest_Parent__c FROM Contact WHERE LastName = 'diana'];
+		Test.stopTest();
 
-		System.debug('Andrey: ' + andrey);
-		System.debug('vlad: ' + vlad);
-		System.debug('dima: ' + dima);
-		System.debug('sasha: ' + sasha);
-		System.debug('kolia: ' + kolia);
-		System.debug('diana: ' + diana);
+		Contact andrey = [SELECT Id, ChildCount__c FROM Contact WHERE LastName = 'andrey'];
+		Contact vlad = [SELECT Id, ChildCount__c FROM Contact WHERE LastName = 'vlad'];
+		Contact dima = [SELECT Id, ChildCount__c FROM Contact WHERE LastName = 'dima'];
+		Contact sasha = [SELECT Id, ChildCount__c FROM Contact WHERE LastName = 'sasha'];
+		Contact kolia = [SELECT Id, ChildCount__c FROM Contact WHERE LastName = 'kolia'];
+		Contact diana = [SELECT Id, ChildCount__c FROM Contact WHERE LastName = 'diana'];
 
 		System.assertEquals(0, andrey.ChildCount__c);
 		System.assertEquals(0, vlad.ChildCount__c);
@@ -197,7 +177,9 @@ private class ContactTriggerHandlerTest {
 	 */
 
 	@IsTest
-	static void testDeleteWithHierarchy1() {
+	static void testDeleteLowestChild() {
+		Test.startTest();
+		
 		Map<String, Contact> contacts = new Map<String, Contact>{
 				'Andrey' => new Contact(LastName = 'Andrey'),
 				'Vlad' => new Contact(LastName = 'Vlad'),
@@ -221,24 +203,17 @@ private class ContactTriggerHandlerTest {
 		contacts.get('Kolia').Parent_Contact__c = contacts.get('Dima').Id;
 		contacts.get('Diana').Parent_Contact__c = contacts.get('Dima').Id;
 
-		System.debug('FIRSTUPDATE');
-//		ContactTriggerHandler.IS_ALLOW_AFTER_UPDATE = true;
-
 		update contacts.values();
 
 		delete contacts.get('Diana');
 
-		Contact andrey = [SELECT Id, ChildCount__c, Highest_Parent__c FROM Contact WHERE LastName = 'andrey'];
-		Contact vlad = [SELECT Id, ChildCount__c, Highest_Parent__c FROM Contact WHERE LastName = 'vlad'];
-		Contact dima = [SELECT Id, ChildCount__c, Highest_Parent__c FROM Contact WHERE LastName = 'dima'];
-		Contact sasha = [SELECT Id, ChildCount__c, Highest_Parent__c FROM Contact WHERE LastName = 'sasha'];
-		Contact kolia = [SELECT Id, ChildCount__c, Highest_Parent__c FROM Contact WHERE LastName = 'kolia'];
+		Test.stopTest();
 
-		System.debug('Andrey: ' + andrey);
-		System.debug('vlad: ' + vlad);
-		System.debug('dima: ' + dima);
-		System.debug('sasha: ' + sasha);
-		System.debug('kolia: ' + kolia);
+		Contact andrey = [SELECT Id, ChildCount__c FROM Contact WHERE LastName = 'andrey'];
+		Contact vlad = [SELECT Id, ChildCount__c FROM Contact WHERE LastName = 'vlad'];
+		Contact dima = [SELECT Id, ChildCount__c FROM Contact WHERE LastName = 'dima'];
+		Contact sasha = [SELECT Id, ChildCount__c FROM Contact WHERE LastName = 'sasha'];
+		Contact kolia = [SELECT Id, ChildCount__c FROM Contact WHERE LastName = 'kolia'];
 
 		System.assertEquals(4, andrey.ChildCount__c);
 		System.assertEquals(3, vlad.ChildCount__c);
@@ -263,7 +238,9 @@ private class ContactTriggerHandlerTest {
 	 */
 
 	@IsTest
-	static void testDeleteWithHierarchy2() {
+	static void testDeleteMiddleChild() {
+		Test.startTest();
+		
 		Map<String, Contact> contacts = new Map<String, Contact>{
 				'Andrey' => new Contact(LastName = 'Andrey'),
 				'Vlad' => new Contact(LastName = 'Vlad'),
@@ -287,20 +264,28 @@ private class ContactTriggerHandlerTest {
 		contacts.get('Kolia').Parent_Contact__c = contacts.get('Dima').Id;
 		contacts.get('Diana').Parent_Contact__c = contacts.get('Dima').Id;
 
-		System.debug('FIRSTUPDATE');
-//		ContactTriggerHandler.IS_ALLOW_AFTER_UPDATE = true;
-
 		update contacts.values();
 
 		delete contacts.get('Dima');
 
-		Contact andrey = [SELECT Id, ChildCount__c, Highest_Parent__c FROM Contact WHERE LastName = 'andrey'];
-		Contact vlad = [SELECT Id, ChildCount__c, Highest_Parent__c FROM Contact WHERE LastName = 'vlad'];
+		Test.stopTest();
 
-		System.debug('Andrey: ' + andrey);
-		System.debug('vlad: ' + vlad);
+		Contact andrey = [SELECT Id, ChildCount__c FROM Contact WHERE LastName = 'andrey'];
+		Contact vlad = [SELECT Id, ChildCount__c FROM Contact WHERE LastName = 'vlad'];
 
 		System.assertEquals(1, andrey.ChildCount__c);
 		System.assertEquals(0, vlad.ChildCount__c);
+	}
+
+	@IsTest
+	static void testRunAfterCreateHandler() {
+		ContactTriggerHandler.IS_ALLOW_AFTER_CREATE = false;
+		ContactTriggerHandler.afterInsert(null, null);
+	}
+
+	@IsTest
+	static void testRunAfterDeleteHandler() {
+		ContactTriggerHandler.IS_ALLOW_AFTER_DELETE = false;
+		ContactTriggerHandler.afterDelete(null, null);
 	}
 }

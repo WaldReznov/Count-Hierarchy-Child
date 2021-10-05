@@ -7,13 +7,29 @@ public with sharing class ContactTriggerHandler {
 	@TestVisible public static Boolean IS_ALLOW_AFTER_UPDATE = true;
 	@TestVisible public static Boolean IS_ALLOW_AFTER_DELETE = true;
 
+	public class Hierarchy {
+		List<Hierarchy> hierarchyChild = new List<Hierarchy>();
+		String selfId;
+		String parentId;
+		Integer countChild = 0;
+
+		public Hierarchy(String selfId, String parentId) {
+			this.selfId = selfId;
+			this.parentId = parentId;
+		}
+
+		public void addChild(Hierarchy hierarchyChild) {
+			this.hierarchyChild.add(hierarchyChild);
+		}
+	}
+
 	public static void afterInsert(Map<Id, Contact> oldContactMap, Map<Id, Contact> newContactMap) {
 		if(IS_ALLOW_AFTER_CREATE == false) {
 			return;
 		}
 		setAllowsToFalse();
 
-		beforeUpdateMethod(newContactMap);
+		calculateChild(newContactMap);
 
 		setAllowsToTrue();
 	}
@@ -25,7 +41,7 @@ public with sharing class ContactTriggerHandler {
 
 		setAllowsToFalse();
 
-		beforeUpdateMethod(newContactMap);
+		calculateChild(newContactMap);
 
 		setAllowsToTrue();
 	}
@@ -36,7 +52,7 @@ public with sharing class ContactTriggerHandler {
 		}
 		setAllowsToFalse();
 
-		beforeUpdateMethod(newContactMap);
+		calculateChild(newContactMap);
 
 		setAllowsToTrue();
 	}
@@ -53,69 +69,13 @@ public with sharing class ContactTriggerHandler {
 		IS_ALLOW_AFTER_DELETE = true;
 	}
 
-
-	public class Hierarchy {
-		List<Hierarchy> hierarchyChild = new List<Hierarchy>();
-		String selfId;
-		String parentId;
-		Integer countChild = 0;
-
-		public Hierarchy(String selfId, String parentId) {
-			this.selfId = selfId;
-			this.parentId = parentId;
-		}
-
-		public void addChild(Hierarchy hierarchyChild) {
-			this.hierarchyChild.add(hierarchyChild);
-		}
-
-	}
-
-	static Set<Id> getHighestParents(List<Contact> contacts) {
-		Set<Id> ids = new Set<Id>();
-
-		for(Contact contact : contacts) {
-			if(contact.Highest_Parent__c != null) {
-				ids.add(contact.Highest_Parent__c);
-			}
-		}
-
-		return ids;
-	}
-
-	static Map<Id, Contact> getContactMap(Set<String> ids) {
-		return new Map<Id, Contact>([
-				SELECT
-						Id,
-						Name,
-						Parent_Contact__c,
-						Highest_Parent__c
-				FROM
-						Contact
-				WHERE
-						Id IN :ids
-							OR
-						Highest_Parent__c IN :ids
-		]);
-	}
-
-	static Set<String> getShortedIds(Set<Id> ids) {
-		Set<String> shortedIds = new Set<String>();
-
-		for(Id recordId : ids) {
-			shortedIds.add(String.valueOf(recordId).substring(0, 15));
-		}
-
-		return shortedIds;
-	}
-
-	static void beforeUpdateMethod(Map<Id, Contact> contactMap) {
+	static void calculateChild(Map<Id, Contact> contactMap) {
 		Set<Id> highestParents = getHighestParents(contactMap.values());
 
 		Set<String> shortedIds = getShortedIds(highestParents);
 
 		Map<Id, Contact> selectedContactMap = getContactMap(shortedIds);
-		
+
 		Map<String, Hierarchy> hierarchyMap = new Map<String, Hierarchy>();
 
 		for(Contact contact : selectedContactMap.values()) {
@@ -141,6 +101,45 @@ public with sharing class ContactTriggerHandler {
 		}
 
 		update contactsForUpdate;
+	}
+
+
+	static Set<Id> getHighestParents(List<Contact> contacts) {
+		Set<Id> ids = new Set<Id>();
+
+		for(Contact contact : contacts) {
+			if(contact.Highest_Parent__c != null) {
+				ids.add(contact.Highest_Parent__c);
+			}
+		}
+
+		return ids;
+	}
+
+	static Set<String> getShortedIds(Set<Id> ids) {
+		Set<String> shortedIds = new Set<String>();
+
+		for(Id recordId : ids) {
+			shortedIds.add(String.valueOf(recordId).substring(0, 15));
+		}
+
+		return shortedIds;
+	}
+
+	static Map<Id, Contact> getContactMap(Set<String> ids) {
+		return new Map<Id, Contact>([
+				SELECT
+						Id,
+						Name,
+						Parent_Contact__c,
+						Highest_Parent__c
+				FROM
+						Contact
+				WHERE
+				Id IN :ids
+				OR
+				Highest_Parent__c IN :ids
+		]);
 	}
 
 	static List<Hierarchy> countChildForHierarchy(List<Hierarchy> hierarchies) {
