@@ -14,7 +14,7 @@ private class ContactTriggerHandlerTest {
 								-> Kolia
 								-> Diana
 
-		Hierarchy old:
+		Hierarchy new:
 					Andrey ↘︎
 						  Vlad ↘︎
 							Dima ↘︎
@@ -77,6 +77,37 @@ private class ContactTriggerHandlerTest {
 		System.assertEquals(0, diana.ChildCount__c);
 	}
 
+	/*
+		Hierarchy:
+		Andrey -> 1000 contacts
+	 */
+
+	@IsTest
+	static void testCreateBulkifyWithHierarchy() {
+		Test.startTest();
+		Map<String, Contact> contacts = new Map<String, Contact>{
+				'Andrey' => new Contact(LastName = 'Andrey')
+		};
+
+		insert contacts.values();
+
+		List<Contact> contacts2 = new List<Contact>();
+
+		for(integer i = 0; i < 1000; i++) {
+			contacts2.add(new Contact(
+					LastName = 'Test_' + i,
+					Parent_Contact__c = contacts.get('Andrey').Id
+			));
+		}
+
+		insert contacts2;
+
+		Test.stopTest();
+
+		Contact andrey = [SELECT Id, ChildCount__c FROM Contact WHERE LastName = 'Andrey'];
+		System.assertEquals(1000, andrey.ChildCount__c);
+	}
+
 
 	/*
 
@@ -108,7 +139,7 @@ private class ContactTriggerHandlerTest {
 				'Sasha' => new Contact(LastName = 'Sasha'),
 				'Kolia' => new Contact(LastName = 'Kolia'),
 				'Diana' => new Contact(LastName = 'Diana')
-		}; 
+		};
 
 		insert contacts.values();
 

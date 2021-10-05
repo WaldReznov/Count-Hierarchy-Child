@@ -76,33 +76,16 @@ public with sharing class ContactTriggerHandler {
 
 		Map<Id, Contact> selectedContactMap = getContactMap(shortedIds);
 
-		Map<String, Hierarchy> hierarchyMap = new Map<String, Hierarchy>();
+		Map<String, Hierarchy> hierarchyMap = convertContactToHierarchyMap(selectedContactMap);
 
-		for(Contact contact : selectedContactMap.values()) {
-			String selfId = contact.Id;
-			String parentId = contact.Parent_Contact__c;
-			hierarchyMap.put(selfId, new Hierarchy(selfId, parentId));
-		}
-
-		for(Hierarchy hierarchyParent : hierarchyMap.values()) {
-			for(Hierarchy hierarchyChild: hierarchyMap.values()) {
-				if(hierarchyParent.selfId == hierarchyChild.parentId) {
-					hierarchyParent.addChild(hierarchyChild);
-					hierarchyMap.remove(hierarchyChild.selfId);
-				}
-			}
-		}
-
+		hierarchyMap = setMultiHierarchy(hierarchyMap);
+		
 		List<Hierarchy> hierarchies = countChildForHierarchy(hierarchyMap.values());
-		List<Contact> contactsForUpdate = new List<Contact>();
 
-		for(Hierarchy hierarchy : hierarchies) {
-			contactsForUpdate.addAll(getContactsFromHierarchy(hierarchy, new List<Contact>()));
-		}
+		List<Contact> contactsForUpdate = convertHierarchyToContacts(hierarchies);
 
 		update contactsForUpdate;
 	}
-
 
 	static Set<Id> getHighestParents(List<Contact> contacts) {
 		Set<Id> ids = new Set<Id>();
@@ -182,6 +165,41 @@ public with sharing class ContactTriggerHandler {
 		}
 
 		return contacts;
+	}
+
+	static Map<String, Hierarchy> convertContactToHierarchyMap(Map<Id, Contact> selectedContactMap) {
+		Map<String, Hierarchy> hierarchyMap = new Map<String, Hierarchy>();
+
+		for(Contact contact : selectedContactMap.values()) {
+			String selfId = contact.Id;
+			String parentId = contact.Parent_Contact__c;
+			hierarchyMap.put(selfId, new Hierarchy(selfId, parentId));
+		}
+		
+		return hierarchyMap;
+	}
+	
+	static Map<String, Hierarchy> setMultiHierarchy(Map<String, Hierarchy> hierarchyMap) {
+		for(Hierarchy hierarchyParent : hierarchyMap.values()) {
+			for(Hierarchy hierarchyChild: hierarchyMap.values()) {
+				if(hierarchyParent.selfId == hierarchyChild.parentId) {
+					hierarchyParent.addChild(hierarchyChild);
+					hierarchyMap.remove(hierarchyChild.selfId);
+				}
+			}
+		}
+		
+		return hierarchyMap;
+	}
+	
+	static List<Contact> convertHierarchyToContacts(List<Hierarchy> hierarchies) {
+		List<Contact> contactsForUpdate = new List<Contact>();
+
+		for(Hierarchy hierarchy : hierarchies) {
+			contactsForUpdate.addAll(getContactsFromHierarchy(hierarchy, new List<Contact>()));
+		}
+
+		return contactsForUpdate;
 	}
 
 	static Contact createContactForUpdate(Hierarchy hierarchy) {
