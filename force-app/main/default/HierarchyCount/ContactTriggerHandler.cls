@@ -24,35 +24,24 @@ public with sharing class ContactTriggerHandler {
 	}
 
 	public static void afterInsert(Map<Id, Contact> oldContactMap, Map<Id, Contact> newContactMap) {
-		if(IS_ALLOW_AFTER_CREATE == false) {
-			return;
-		}
-		setAllowsToFalse();
-
-		calculateChild(newContactMap);
-
-		setAllowsToTrue();
+		startHierarchyLogic(IS_ALLOW_AFTER_CREATE, newContactMap);
 	}
 
 	public static void afterUpdate(Map<Id, Contact> oldContactMap, Map<Id, Contact> newContactMap) {
-		if(IS_ALLOW_AFTER_UPDATE == false) {
-			return;
-		}
-
-		setAllowsToFalse();
-
-		calculateChild(newContactMap);
-
-		setAllowsToTrue();
+		startHierarchyLogic(IS_ALLOW_AFTER_UPDATE, newContactMap);
 	}
 
 	public static void afterDelete(Map<Id, Contact> oldContactMap, Map<Id, Contact> newContactMap) {
-		if(IS_ALLOW_AFTER_DELETE == false) {
+		startHierarchyLogic(IS_ALLOW_AFTER_DELETE, newContactMap);
+	}
+
+	static void startHierarchyLogic(Boolean variableToCheck, Map<Id, Contact> contactMap) {
+		if(variableToCheck == false) {
 			return;
 		}
 		setAllowsToFalse();
 
-		calculateChild(newContactMap);
+		calculateChild(contactMap);
 
 		setAllowsToTrue();
 	}
